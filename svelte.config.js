@@ -12,6 +12,6 @@ export default {
   kit: {
     adapter: adapter({ pages: 'build', assets: 'build', strict: false }),
     alias: { '#lib': 'src/lib' },
-    prerender: { entries: ['*', '/kb', '/kb/incidents/4471', '/kb/triage/dedupe', '/kb/decisions/0001-dedupe-by-subject'] },
+    prerender: { entries: ['*', '/kb', '/kb/incidents/4471', '/kb/incidents/4471-problems', '/kb/triage/dedupe', '/kb/decisions/0001-dedupe-by-subject'] },
   },
 };

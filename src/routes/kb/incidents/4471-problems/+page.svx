@@ -1,0 +1,63 @@
+---
+layout: runbook
+title: '#4471 · three problems, not one'
+owner: support desk
+status: open
+reviewed: 2026-10-29
+signature: v1.eyJzdWIiOiI2MjEwIiwiYXVkIjoiY2hhbGxlbmdlOndoYXQtaXQtc2hvd3MiLCJpYXQiOjE3OTMzMjEzMDgsImV4cCI6MTc5MzQwNzcwOH0.ubiX5xNKASsth7FAYrJHRfxK5KfFz0xX9raScHA388E
+---
+
+<script>
+  import ProblemTable from '#lib/kb/ProblemTable.svelte';
+  import Callout from '#lib/kb/Callout.svelte';
+  import RenderStamp from '#lib/kb/RenderStamp.svelte';
+
+  const issues = 'https://github.com/amandamunoz/mega-s01e03-what-it-shows/issues';
+</script>
+
+[#4471](/kb/incidents/4471) says "known, one issue, one fix queued". The reports in it say
+otherwise. They hold three problems, and one fix to the parser closes only one of them.
+
+<Callout kind="warn">
+#4471 is not one bug. Each problem below has its own ticket. Do not close them with the parser fix.
+</Callout>
+
+## The split
+
+<ProblemTable ticket={4471} {issues} tickets={{ parser: 1, hint: 2, 'one-day-move': 3 }} />
+
+The counts come from the export at render time. New reports move them; this page does not need an edit.
+
+## The three problems
+
+**`parser`: the shared parser reads every date month first.** Tenants that write the day
+first get day and month swapped: "8 January landed on 1 August". Every tenant on file is
+day first, so every tenant has it, through every channel.
+
+**`hint`: booking-v3 prints `MM/DD/YYYY` under its date field.** Alder Physio, Copper Studio and
+Pale Harbour run booking-v3. Their people type what the hint tells them, month first, and the form
+reads it the tenant's way, day first. The swap looks the same as `parser`, but the fix is in the
+form, and the parser fix does not touch it.
+
+**`one-day-move`: the date moves one day back, not day for month.** "Tuesday 6 October showed as
+Monday." "Client in Lisbon got Tuesday. Client in Toronto got Monday." An invite arrived before
+the booking. This is a time zone fault, not a parse order fault. The desk saw it
+(`desk-notes.json`), but the cause table files these reports under `parser` by tenant, so they
+vanish into the biggest row.
+
+## Why #4471 looked like one issue
+
+- The desk merges on the subject line ([decision 0001](/kb/decisions/0001-dedupe-by-subject)).
+  All three problems arrive as "wrong day" or "wrong date", so they merged into one ticket.
+- Intake tags a report from the reporter's browser. The cause depends on the tenant: its locale
+  and its booking form. The column "tagged otherwise by intake" counts where the two disagree.
+- The export comes in pages that overlap, so some reports come twice. Count by id.
+
+## What to do
+
+1. Fix the parser to read dates in the tenant's locale (ticket for `parser`).
+2. Make booking-v3 print the hint in the tenant's order, and read what it prints (ticket for `hint`).
+3. Find where a booking time turns into a date without its time zone (ticket for `one-day-move`).
+4. Do not mark #4471 known until all three tickets close.
+
+<RenderStamp {signature} />

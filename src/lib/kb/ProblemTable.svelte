@@ -3,40 +3,38 @@
   import notes from '#lib/data/desk-notes.json';
   import { type Report } from '#lib/kb/causes';
   import { tenantOf } from '#lib/kb/locales';
-  import { groupByProblem, type Problem } from '#lib/kb/problems';
+  import { problemRows, type Problem } from '#lib/kb/problems';
 
-  let { ticket, issues, tickets }: { ticket: number; issues: string; tickets: Partial<Record<Problem, number>> } =
+  type State = { ticket: number; state: string };
+  let { ticket, issues, tickets }: { ticket: number; issues: string; tickets: Partial<Record<Problem, State>> } =
     $props();
 
-  const split = $derived(groupByProblem(reports as Report[], ticket, tenantOf, notes.oneDayMove));
-  const rows = (reports as Report[]).length;
+  const split = $derived(problemRows(reports as Report[], ticket, tenantOf, notes.oneDayMove));
 </script>
 
 <p class="sum">
-  <strong>{split.merged.length}</strong> reports merged into #{ticket} ({rows} rows in the export, with copies) ·
-  <strong>{split.groups.length}</strong>
-  {split.groups.length === 1 ? 'problem' : 'problems'}
+  <strong>{split.merged}</strong> reports merged into #{ticket} ·
+  <strong>{split.rows.length}</strong>
+  {split.rows.length === 1 ? 'problem' : 'problems'}
 </p>
 
 <table>
   <thead>
-    <tr><th>problem</th><th>reports</th><th>tagged otherwise by intake</th><th>tenants</th><th>seen</th><th>ticket</th></tr>
+    <tr><th>problem</th><th>reports</th><th>tenants</th><th>seen</th><th>ticket</th><th>state</th></tr>
   </thead>
   <tbody>
-    {#each split.groups as g (g.problem)}
-      <tr class:open={!tickets[g.problem]}>
-        <td><code>{g.problem}</code></td>
-        <td><strong>{g.reports.length}</strong></td>
-        <td>{g.taggedOtherwise}</td>
-        <td title={g.tenants.join(', ')}>{g.tenants.length}</td>
-        <td>{g.firstSeen} → {g.lastSeen}</td>
+    {#each split.rows as row (row.problem)}
+      {@const t = tickets[row.problem]}
+      <tr class:open={t?.state === 'open'}>
+        <td><code>{row.problem}</code></td>
         <td>
-          {#if tickets[g.problem]}
-            <a href="{issues}/{tickets[g.problem]}">#{tickets[g.problem]}</a>
-          {:else}
-            no ticket yet
-          {/if}
+          <strong>{row.reports}</strong>
+          {#if row.filedUnder}<span class="note">counted under <code>{row.filedUnder}</code></span>{/if}
         </td>
+        <td>{row.tenants}</td>
+        <td>{row.firstSeen} → {row.lastSeen}</td>
+        <td>{#if t}<a href="{issues}/{t.ticket}">#{t.ticket}</a>{:else}no ticket yet{/if}</td>
+        <td>{t?.state ?? ''}</td>
       </tr>
     {/each}
   </tbody>
@@ -44,5 +42,6 @@
 
 <style>
   .sum { font-size: 1.1rem; }
+  .note { color: var(--muted); font-size: 0.85em; }
   .open td { background: var(--warn-bg); }
 </style>
